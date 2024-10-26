@@ -1,6 +1,6 @@
 import customtkinter
 from functools import partial as p 
-from DatabaseManager import login_validation
+from DatabaseManager import login_validation, request_password_change
 
 
 class RenderApplication:
@@ -30,6 +30,7 @@ class RenderApplication:
         self.password_input.grid(row = 1, sticky = "", padx=20, pady=(0,10))
 
         self.forgot_password = customtkinter.CTkLabel(master=self.login_field, text="Esqueceu a senha / Primeiro acesso?", font=("arial", 12))
+        self.forgot_password.bind('<Button-1>', self.send_forget_password_request)
         self.forgot_password.grid(row=2, sticky="w", padx=20, pady=(0,20))
 
         # Login Button
@@ -39,10 +40,32 @@ class RenderApplication:
         
         self.app.mainloop()
 
-
+    
     def send_validation(self) -> None:
         lg = self.login_input.get() 
         ps = self.password_input.get()
-        print(login_validation(lg, ps))
-        
-        
+
+        match login_validation(lg, ps):
+            case "FOUND":
+                self.login_input.configure(border_color = "#A0C1B9") 
+                self.password_input.configure(border_color = "#A0C1B9") 
+
+            case "NOT VALID":
+                self.login_input.configure(border_color = "#96031A") 
+                self.password_input.configure(border_color = "#96031A") 
+                self.forgot_password.configure(text="Usuário/Senha incorreta!")          
+
+            case "FAILED":
+                self.forgot_password.configure(text="Servidor Offline!")         
+                
+            
+            
+    def send_forget_password_request(self, username: str = False) -> None:
+        lg = self.login_input.get()
+        print(lg)
+        # catch_ans = request_password_change(lg)
+        # print(catch_ans)    
+            
+            
+    def renderMainMenu(self) -> None: pass
+    
