@@ -28,7 +28,7 @@ def login_validation(username: str = False, password: str = False) -> str:
 
 def request_password_change(username: str = False) -> bool:
     email = 'puphealthapp@gmail.com'
-    password = 'rgtx yvlo lphg vsat'
+    password = ''
     subject = "Redefinição de Senha."
     to_addr = 'archgabscontato@gmail.com'   
     code = str(random.randint(4000,9999))
