@@ -1,6 +1,6 @@
 import customtkinter
 from functools import partial as p 
-from DatabaseManager import login_validation, request_password_change
+from DatabaseManager import login_validation, request_password_change, is_code_valid 
 
 
 class RenderApplication:
@@ -32,7 +32,7 @@ class RenderApplication:
         self.forgot_password = customtkinter.CTkLabel(master=self.login_field, text="Esqueceu a senha / Primeiro acesso?", font=("arial", 12))
   
         # Efeitos Hover
-        self.forgot_password.bind('<Button-1>', self.send_forget_password_request)
+        self.forgot_password.bind('<Button-1>', lambda event: self.send_forget_password_request())
         self.forgot_password.bind('<Enter>', lambda event: self.change_color(mode='<Enter>'))
         self.forgot_password.bind('<Leave>', lambda event: self.change_color(mode='<Leave>'))
         self.forgot_password.configure(cursor='hand2')
@@ -71,30 +71,47 @@ class RenderApplication:
                 
             
             
-    def send_forget_password_request(self, username: str = False) -> None:
+    def send_forget_password_request(self) -> None:
         print("SEND_FORGET_PASSWORD_REQUEST")
-        lg = self.login_input.get()
-        ans = request_password_change(lg)
-        
-        if ans[0]:
-            self.renderCodeVerify(user=lg, code=ans[1])
-        
+        # ans = request_password_change(lg)
+        self.renderCodeVerify(has_been_sent=False)
+                    
+       
+    def renderCodeVerify(self, has_been_sent: bool = False) -> None: 
+        self.forgot_password.unbind('<Button-1>')    
+        if has_been_sent:
+            catch = request_password_change(username=self.temp_input.get())
+            if catch is not False:  # Verifica se o retorno não é False (Usuário válido)
+                self.temp_label.configure(text=f'Digite o código enviado para o e-mail do(a): {self.temp_input.get().title()}:')
+                self.temp_input.configure(placeholder_text='Código', show='*')
+                self.temp_input.delete(0, 'end')        
+                self.btn.configure(text='Verificar', command=p(self.send_code_validation, code=catch))
+            else:
+                # Volta para pedir usuário
+                self.temp_label.configure(text="Usuário não encontrado. Tente novamente.")
+                self.temp_input.delete(0, 'end')  # Limpa o campo de entrada
+                self.btn.configure(text='Enviar Código')               
+        else:
+            self.temp_toplevel = customtkinter.CTkToplevel()
+            self.temp_toplevel.geometry('450x150')
+            self.temp_toplevel.title('Esqueceu a senha?')
+            self.temp_toplevel.columnconfigure(0, weight=1)
+            self.temp_toplevel.resizable(False, False)
             
-        
-    def renderCodeVerify(self, code: str, user: str) -> None: 
-        self.temp_toplevel = customtkinter.CTkToplevel()
-        self.temp_toplevel.geometry('400x150')
-        self.temp_toplevel.title('Verificação Código')
-        self.temp_toplevel.columnconfigure(0, weight=1)
-        self.temp_toplevel.resizable(False, False)
-        
-        self.temp_label = customtkinter.CTkLabel(master=self.temp_toplevel,text=f"Digite o código enviado para o e-mail do {user.title()}.", font=('Arial', 16))
-        self.temp_label.grid(padx=20, pady=10, sticky='', row=0)
+            self.temp_label = customtkinter.CTkLabel(master=self.temp_toplevel, text="Qual seu usuário?", font=('Arial', 16))
+            self.temp_label.grid(padx=20, pady=10, sticky='', row=0)
 
-        self.temp_input = customtkinter.CTkEntry(master=self.temp_toplevel, placeholder_text="Código", width=250, height=30, show="*")
-        self.temp_input.grid(padx=20, pady=5, sticky='', row=1)
-       
-        self.btn = customtkinter.CTkButton(master=self.temp_toplevel,text=f"Verificar", font=("Arial", 16), width=280,)
-        self.btn.grid(padx=20, pady=20, sticky='', row=2)
-       
-    
+            self.temp_input = customtkinter.CTkEntry(master=self.temp_toplevel, placeholder_text="Usuário", width=250, height=30)
+            self.temp_input.grid(padx=20, pady=5, sticky='', row=1)
+        
+            self.btn = customtkinter.CTkButton(master=self.temp_toplevel, text="Enviar Código", font=("Arial", 16), width=280,
+                                                command=p(self.renderCodeVerify, True))
+            self.btn.grid(padx=20, pady=20, sticky='', row=2)
+            
+            self.temp_toplevel.protocol("WM_DELETE_WINDOW",
+                                        lambda: (self.forgot_password.bind('<Button-1>',
+                                        lambda event: self.send_forget_password_request()),
+                                            self.temp_toplevel.destroy()))
+
+    def send_code_validation(self, code) -> bool:
+        is_code_valid(code=code, input_code=self.temp_input.get())
