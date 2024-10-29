@@ -1,5 +1,5 @@
-from RenderApplication import RenderApplication
+from RenderApplication import LoginScreen
 
 
 if __name__ == '__main__':
-    render = RenderApplication()
+    render = LoginScreen()
