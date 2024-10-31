@@ -1,11 +1,13 @@
 import customtkinter
 from functools import partial as p 
-from DatabaseManager import login_validation, send_password_change, is_code_valid, change_password
+from DatabaseManager import LoginManager, DashboardUtilities
 
 
-class LoginScreen:
+class LoginScreen(LoginManager):
     def __init__(self) -> None:
+        super().__init__()
         self.app = customtkinter.CTk()
+        
         customtkinter.set_appearance_mode('dark')
         customtkinter.set_default_color_theme('green')                  
 
@@ -13,6 +15,9 @@ class LoginScreen:
         self.app.title("Login")
         self.app.resizable(False, False)
         self.app.columnconfigure(0, weight=1)
+
+        # Temporary Bypass
+        # self.mainApp = mainApp(username='Bypass Login', instance=self)
         
         # Title
         self.label = customtkinter.CTkLabel(master=self.app, text="Pup Health", font=("Pacifico", 48),  padx = 20, pady = 20)
@@ -56,7 +61,7 @@ class LoginScreen:
         lg = self.login_input.get() 
         ps = self.password_input.get()
 
-        match login_validation(lg, ps):
+        match self.login_validation(lg, ps):
             case "FOUND":
                 self.login_input.configure(border_color = "#A0C1B9") 
                 self.password_input.configure(border_color = "#A0C1B9") 
@@ -84,7 +89,7 @@ class LoginScreen:
         
         if has_been_sent:
             # Responsável pelo envio do e-mail
-            catch = send_password_change(username=self.temp_input.get())
+            catch = self.send_password_change(username=self.temp_input.get())
             if catch is not False:  
                 user = self.temp_input.get()
                 
@@ -128,7 +133,7 @@ class LoginScreen:
 
 
     def send_code_validation(self, code, user) -> None:
-        catch = is_code_valid(code=code, input_code=self.temp_input.get())
+        catch = self.is_code_valid(code=code, input_code=self.temp_input.get())
      
         if catch:
             self.temp_label.configure(text=f'Digite abaixo a nova senha com ao menos 8 caracteres, e ao menos um número:')
@@ -141,7 +146,7 @@ class LoginScreen:
             
              
     def request_password_change(self, input, user) -> None:
-        catch = change_password(input, user)
+        catch = self.change_password(input, user)
         if catch:
             self.temp_toplevel.destroy()
             self.forgot_password.bind('<Button-1>', lambda event: self.renderCodeVerify(has_been_sent=False))
@@ -152,24 +157,29 @@ class LoginScreen:
             
             
 class mainApp(customtkinter.CTk):
-    def __init__(self, username: str, instance):
+    def __init__(self, username: str, instance) -> None:
         super().__init__()
         print("Main App is building......")
+
+        self.dashboardManager = DashboardUtilities()
         
         self.title("Dashboard")
         self.geometry('1280x768')
         self.resizable(False, False)
+        
         self.rowconfigure(1, weight=1)
         self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        
+        self.is_panel_open = False
 
         self.nav = self.navBar(username=username, instance=instance)
         self.side = self.sideBar()
-        
-        
+
         self.mainloop()
         
         
-    def navBar(self, username, instance) -> None:
+    def navBar(self, username: str, instance) -> None:
         self.top_frame = customtkinter.CTkFrame(self, height=100)
         self.top_frame.grid(row=0, column=0, padx=20, pady=20, sticky='new', columnspan=2)
         self.top_frame.grid_columnconfigure(0, weight=1)
@@ -178,7 +188,7 @@ class mainApp(customtkinter.CTk):
         self.top_frame_user_label = customtkinter.CTkLabel(master=self.top_frame,
                                                            height=40,
                                                            anchor='center',
-                                                           text=f"Bem-vindo de volta, {username.title()}.",
+                                                           text=f"Bem-vindo de volta, {self.dashboardManager.get_user(usr=username)[0]}.",
                                                            font=('Arial', 16, 'bold'),)
         
         self.top_frame_user_label.grid(column=0, row=0, padx=20, pady=20, sticky='nw')
@@ -195,19 +205,20 @@ class mainApp(customtkinter.CTk):
          
     
     def sideBar(self) -> None:
+        self.button_names = ["Cadastrar Paciente", "Visualizar Pacientes", "Gerar Relatório"]
         self.side_frame = customtkinter.CTkFrame(self, width=300)
-        self.side_frame.grid(row=1, column=0, padx=20, pady=(10,20), sticky='nws', rowspan=5)
+        self.side_frame.grid(row=1, column=0, padx=20, pady=(10,20), sticky='nws',)
         self.side_frame.grid_columnconfigure(0, weight=1)
         self.side_frame.grid_propagate(False)
         
 
         self.buttons = {}
-        for i, btn_name in enumerate(["Cadastrar Paciente", "Visualizar Pacientes", "Gerar Relatório"]):
+        for i, btn_name in enumerate(self.button_names):
             temp_btn = customtkinter.CTkButton(master=self.side_frame,
                                                             text=f"{btn_name}",
                                                             fg_color="#333",
                                                             height=50)
-            temp_btn.grid(column=0, row=i, padx=20, pady=20, sticky='nwe')
+            temp_btn.grid(column=0, row=i, padx=20, pady=(10,5), sticky='nwe')
             self.buttons[btn_name] = temp_btn
         
         
@@ -222,18 +233,167 @@ class mainApp(customtkinter.CTk):
         )
         print("SUCESS_BUILDING_SIDEBAR")
     
+           
+    def createPanel(self, params: dict):
+        self.panel = customtkinter.CTkScrollableFrame(master=self, label_text=params['title'], width=880)
+        self.panel.grid(row=1, column=1, padx=20, pady=(10,20), sticky='nsew')
+        self.panel.grid_columnconfigure(0, weight=1)
+        
+        self.buttons[params['btn']].configure(
+            border_color='#719683', 
+            border_width = 2,
+        )
+        
+        self.generatePanelItems(params["title"])        
+        print("SUCESS_BUILDING_PANEL")
+        
 
-    def display_register_patient(self):
-        print("Hello, world!")
-        
-        
-    def visualize_patients(self):
-        print("Hello, world!")
+    def generatePanelItems(self, mode: str) -> None:
+        match mode:
+            case "Cadastro de Pacientes":
+                # -- Infelizmente a biblioteca consta com um bug que não destrói os paineis propriamente.
+                self.panel.grid(row=1, column=1, padx=20, pady=(10,20), sticky='nws')
+                self.grid_columnconfigure(1, weight=2)
+                
+                self.register_patients_elements = {}
+                for i, item in enumerate(["Nome do Pet", "Genero", "Raca", "Tutor","Vacinas Tomadas", "Registrar"]):
+                    if item == "Genero":
+                        entry = customtkinter.CTkOptionMenu(self.panel,
+                                                            values=["Macho", "Fêmea"],
+                                                            width=300, 
+                                                            height=50)
+                    elif item == "Registrar":
+                         entry = customtkinter.CTkButton(master=self.panel,
+                                                        text=item,
+                                                        width=300, 
+                                                        height=50,
+                                                        command=self.register_input_handler)                      
+                    else:     
+                        item = item if item != "Raca" else item.replace('c', 'ç')                             
+                        entry = customtkinter.CTkEntry(master=self.panel,
+                                                        placeholder_text=item,
+                                                        width=300,
+                                                        height=50)
+                        
+                    entry.grid(padx=20, pady=5, sticky='nwe', row=i)
+                    if not item == "Registrar":
+                        self.register_patients_elements[item.lower()
+                                                        .replace(' ', '')
+                                                        .replace('ç','c')] = entry
+                self.register_patients_elements['vacinastomadas'].configure(placeholder_text='Exemplo: Antirrábica, Vermifungado 1, A, B')
+                print("SUCESS_ADDING_ITENS")
+                    
+            case "Visualizar Pacientes": pass
+            case "Gerar Relatório": pass
+            
+    def register_tutor(self):
+        catch = customtkinter.CTkInputDialog(
+            title="Tutor Não Encontrado",
+            text=f"Tutor {self.register_patients_elements['tutor'].get().title()} não registrado, deseja incluir um novo tutor? (Sim)",)
+        if catch.get_input().lower() in ['s', 'sim', 'y', 'yes']:
+            self.register_input_handler(new_tutor=self.register_patients_elements['tutor'].get().title())
+       
+       
+    def register_input_handler(self, new_tutor = False):
+        if not new_tutor:                   
+            catch = self.dashboardManager.validate_inputs(self.register_patients_elements, new_tutor=False)
+        else:
+            catch = self.dashboardManager.validate_inputs(self.register_patients_elements, new_tutor)           
+            
+        print(catch)
+        match catch:
+            case "ANIMAL_INSERTED_DB":
+                for item in self.register_patients_elements:
+                    if item != 'genero':
+                        self.register_patients_elements[item].configure(
+                            border_color = '#A0C1B9',
+                            border_width = 2,
+                        )
+                        self.register_patients_elements[item].delete(0, 'end')       
+                self.alert(title="Sucesso", msg="Incluido com sucesso!")
+                print(">")
+                   
+            case "ANIMAL_ALREADY_ASSIGNED":
+                for item in self.register_patients_elements:
+                    if item != 'genero':
+                        self.register_patients_elements[item].configure(
+                            border_color = '#A0C1B9',
+                            border_width = 2,
+                        )
+                self.register_patients_elements['nomedopet'].configure(
+                    border_color = '#9e3333',
+                    border_width = 2,
+                )
+                self.register_patients_elements['nomedopet'].focus()
+                self.alert(title="Animal já cadastrado", msg="Animal já foi cadastrado neste ID, atualize-o.")
+                
+            case "ID_MISSING":
+                for item in self.register_patients_elements:
+                    if item != 'genero':
+                        self.register_patients_elements[item].configure(
+                            border_color = '#A0C1B9',
+                            border_width = 2,
+                        )
+                self.register_patients_elements['tutor'].configure(
+                    border_color = '#9e3333',
+                    border_width = 2,
+                )
+                self.register_patients_elements['tutor'].focus()
+                self.register_tutor()
+            
+       
+    def changePanel(self, params: dict) -> None:
+        if not self.is_panel_open:
+            self.createPanel(params)
+            self.is_panel_open = True
+        else:
+            catch = customtkinter.CTkInputDialog(
+                title="Troca de Abas",
+                text="Você tem uma aba aberta, por segurança digite: SIM para fechar."
+                )
+            if catch.get_input().lower() in ["yes", "sim", "s", 'y']:
+                self.panel.destroy()
+                for btn_name in self.button_names:
+                    self.buttons[btn_name].configure(border_width=0)
 
+                print("SUCESS_CHANGING_PANEL")
+                self.panel.grid_forget()
+                self.createPanel(params)
+
+    def alert(self, title, msg):
+        toplevel = customtkinter.CTkToplevel()
+        toplevel.geometry('300')
+        toplevel.title(title)
+        toplevel.resizable(False, False)
+        toplevel.columnconfigure(0, weight=1)
         
-    def generate_patient_report(self):
-        print("Hello, world!")
+        temp_label = customtkinter.CTkLabel(master=toplevel, text=msg, font=('Arial', 16))
+        temp_label.grid(padx=20, pady=10, sticky='', row=0)
     
+        btn = customtkinter.CTkButton(master=toplevel, text="Fechar", font=("Arial", 16), command=toplevel.destroy)
+        btn.grid(padx=20, pady=20, sticky='', row=1)
+
+
+        
+    def display_register_patient(self) -> None:
+        self.changePanel(params={
+            "title": "Cadastro de Pacientes",
+            "btn": "Cadastrar Paciente",
+        })        
+        
+    def visualize_patients(self) -> None:
+        self.changePanel(params={
+            "title": "Visualizar Pacientes",
+            "btn": "Visualizar Pacientes",
+        })        
+
+        
+    def generate_patient_report(self) -> None:
+         self.changePanel(params={
+            "title": "Gerar Relatório",
+            "btn": "Gerar Relatório",
+        })        
+   
     
     def exitApp(self, instance) -> None:
         self.destroy()
