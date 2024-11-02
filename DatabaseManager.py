@@ -210,3 +210,22 @@ class DashboardUtilities():
                     return "ANIMAL_ALREADY_ASSIGNED"
         return "ID_MISSING"
     
+    def list_patients(self, mode: str = "INIT") -> list:
+        res = None
+        match mode:
+            case "INIT":
+                res = self.cursor.execute('''
+    SELECT p.id, p.nome AS paciente_nome, t.nome_tutor AS tutor_nome, p.vacinas_tomadas 
+    FROM patients p 
+    JOIN tutor t ON p.tutor = t.id 
+    ORDER BY p.id
+''').fetchall()
+            case "Tutor":
+                print(":3")
+                res = None
+            case "Nome Paciente": 
+                res = None
+                print(":P")
+        
+        return res
+                

@@ -1,17 +1,18 @@
+import json
 import customtkinter
 from functools import partial as p 
 from DatabaseManager import LoginManager, DashboardUtilities
 
-
+title_font = 'Pacifico'
 class LoginScreen(LoginManager):
     def __init__(self) -> None:
         super().__init__()
         self.app = customtkinter.CTk()
         
         customtkinter.set_appearance_mode('dark')
-        customtkinter.set_default_color_theme('green')                  
+        customtkinter.set_default_color_theme('green')     
 
-        self.app.geometry("450x500")
+        self.app.geometry("450x450")
         self.app.title("Login")
         self.app.resizable(False, False)
         self.app.columnconfigure(0, weight=1)
@@ -20,21 +21,21 @@ class LoginScreen(LoginManager):
         # self.mainApp = mainApp(username='Bypass Login', instance=self)
         
         # Title
-        self.label = customtkinter.CTkLabel(master=self.app, text="Pup Health", font=("Pacifico", 48),  padx = 20, pady = 20)
+        self.label = customtkinter.CTkLabel(master=self.app, text="Pup Health", font=(title_font, 50),  padx = 20, pady = 20)
         self.label.grid(row = 0, column = 0, sticky="")
         
         # Login Field
         self.login_field = customtkinter.CTkFrame(master=self.app, corner_radius=10, fg_color="#333")
-        self.login_field.grid(row = 1, column = 0, padx = 20, pady = (10,20))
+        self.login_field.grid(row = 1, column = 0, padx = 20, pady = (0,0))
 
         # Login & Password 
-        self.login_input = customtkinter.CTkEntry(master=self.login_field, placeholder_text="Username", width=250, height=30)
-        self.password_input = customtkinter.CTkEntry(master=self.login_field, placeholder_text="Password", show="*", width=250, height=30)
+        self.login_input = customtkinter.CTkEntry(master=self.login_field, placeholder_text="Username", width=250, height=40,)
+        self.password_input = customtkinter.CTkEntry(master=self.login_field, placeholder_text="Password", show="*", width=250, height=40,)
         
         self.login_input.grid(row = 0, sticky = "", padx=20, pady=20)
         self.password_input.grid(row = 1, sticky = "", padx=20, pady=(0,10))
 
-        self.forgot_password = customtkinter.CTkLabel(master=self.login_field, text="Esqueceu a senha / Primeiro acesso?", font=("arial", 12))
+        self.forgot_password = customtkinter.CTkLabel(master=self.login_field, text="Esqueceu a senha / Primeiro acesso?", font=("Open Sans Regular", 12))
   
         # Efeitos Hover
         self.forgot_password.bind('<Button-1>', lambda event: self.renderCodeVerify())
@@ -45,8 +46,7 @@ class LoginScreen(LoginManager):
         self.forgot_password.grid(row=2, sticky="w", padx=20, pady=(0,20))
 
         # Login Button
-        self.login_button = customtkinter.CTkButton(master=self.app, text="Connect", font=("Arial", 16), width=280,
-                                                    command=self.send_validation)
+        self.login_button = customtkinter.CTkButton(master=self.app, text="Connect", font=("Open Sans Regular", 16, 'bold'), width=280, height=40, command=self.send_validation)
         self.login_button.grid(row=2, column=0, padx=20, pady=20, sticky = '')
 
         self.app.mainloop()
@@ -115,13 +115,13 @@ class LoginScreen(LoginManager):
             self.temp_toplevel.columnconfigure(0, weight=1)
             self.temp_toplevel.resizable(False, False)
             
-            self.temp_label = customtkinter.CTkLabel(master=self.temp_toplevel, text="Qual seu usuário?", font=('Arial', 16))
+            self.temp_label = customtkinter.CTkLabel(master=self.temp_toplevel, text="Qual seu usuário?",)
             self.temp_label.grid(padx=20, pady=10, sticky='', row=0)
 
             self.temp_input = customtkinter.CTkEntry(master=self.temp_toplevel, placeholder_text="Usuário", width=250, height=30)
             self.temp_input.grid(padx=20, pady=5, sticky='', row=1)
         
-            self.btn = customtkinter.CTkButton(master=self.temp_toplevel, text="Enviar Código", font=("Arial", 16), width=280,
+            self.btn = customtkinter.CTkButton(master=self.temp_toplevel, text="Enviar Código", width=280,
                                                 command=p(self.renderCodeVerify, True))
             self.btn.grid(padx=20, pady=20, sticky='', row=2)
             
@@ -181,7 +181,7 @@ class mainApp(customtkinter.CTk):
         
     def navBar(self, username: str, instance) -> None:
         self.top_frame = customtkinter.CTkFrame(self, height=100)
-        self.top_frame.grid(row=0, column=0, padx=20, pady=20, sticky='new', columnspan=2)
+        self.top_frame.grid(row=0, column=0, padx=20, pady=(20,10), sticky='new', columnspan=2)
         self.top_frame.grid_columnconfigure(0, weight=1)
         self.top_frame.grid_columnconfigure(1, weight=1)
         
@@ -202,7 +202,6 @@ class mainApp(customtkinter.CTk):
         self.top_frame_btn_exit.grid(column=1, row=0, padx=20, pady=20, sticky='ne')
         print("SUCESS_BUILDING_NAVBAR")
 
-         
     
     def sideBar(self) -> None:
         self.button_names = ["Cadastrar Paciente", "Visualizar Pacientes", "Gerar Relatório"]
@@ -283,8 +282,85 @@ class mainApp(customtkinter.CTk):
                 self.register_patients_elements['vacinastomadas'].configure(placeholder_text='Exemplo: Antirrábica, Vermifungado 1, A, B')
                 print("SUCESS_ADDING_ITENS")
                     
-            case "Visualizar Pacientes": pass
-            case "Gerar Relatório": pass
+            case "Visualizar Pacientes": 
+                self.filter_btns_names = ["ID", "Tutor", "Nome Paciente"]
+                self.filter_btns: dict = {}
+                self.panel.grid_rowconfigure(0, weight=1)
+
+                
+                for i, btn_name in enumerate(self.filter_btns_names):
+                    temp_btn = customtkinter.CTkButton(master=self.panel,
+                                                        text=f"{btn_name}",
+                                                        fg_color="#333",
+                                                        height=40)
+                    
+                    if i == 0:
+                        diff_sticky = 'nw'
+                    elif i== 2:
+                        diff_sticky = 'ne'
+                    else:
+                        diff_sticky = ''
+                        
+                    
+                    temp_btn.grid(column=i, row=0, pady=(10,5), padx=20, sticky=diff_sticky)
+                    self.panel.grid_columnconfigure(i, weight=1)
+                    self.filter_btns[btn_name] = temp_btn
+                    
+                
+                self.filter_btns["ID"].configure(
+                    command=p(self.filter, mode="ID")
+                )
+                self.filter_btns["Tutor"].configure(
+                    command=p(self.filter, mode="Tutor")
+                )
+                self.filter_btns["Nome Paciente"].configure(
+                    command=p(self.filter, mode="Nome Paciente")
+                )    
+                                  
+                # patients_frame_holder: dict = {}                    
+                catch = self.dashboardManager.list_patients()
+                for i, item in enumerate(catch):
+                    # Lado Esquerdo
+                    temp_frame = customtkinter.CTkFrame(master=self.panel, width=600, fg_color='#333', height=150)
+                    temp_frame.grid_columnconfigure(0, weight=1)
+                    temp_frame.grid_columnconfigure(1, weight=1)
+                    
+                    temp_frame.grid(row=i+1, column=0, padx=20, pady=(10,20), sticky='nwe', columnspan=3)
+                    temp_frame.propagate(False)
+                    
+                    name = customtkinter.CTkLabel(text=item[1].title(), master=temp_frame, text_color='#d9d9d9', font=('Arial', 28, 'bold'))
+                    name.grid(row=i, padx=20, pady=(10,0), sticky='nw')
+                    
+                    tutor = customtkinter.CTkLabel(text=item[2].title(), master=temp_frame, text_color='#a6a6a6', font=('Arial', 18, 'bold'))
+                    tutor.grid(row=i+1, padx=20, pady=(0,0), sticky='nw')
+
+                    vacinas_data = json.loads(item[3])
+                    vacinas_texto = "\t".join([f"{v['nome']}" for v in vacinas_data])
+
+                    vacinas = customtkinter.CTkLabel(text=vacinas_texto, master=temp_frame, text_color='#737373', font=('Arial', 14, 'italic'))
+                    vacinas.grid(row=i+2, padx=20, pady=(0, 10), sticky='nw')
+                    
+                    # Lado direito
+                    edit_button = customtkinter.CTkButton(master=temp_frame,
+                                                            text="Editar",
+                                                            font=("Arial", 14, 'bold'),
+                                                            width=100, height=40,
+                                                            corner_radius=30, fg_color='#282828',)
+                    
+                    edit_button.grid(row=i, column=1, padx=20, pady=(10,0), sticky='ne')
+                    
+
+                    id_pet = customtkinter.CTkLabel(text=f'ID: {item[0]}', master=temp_frame, text_color='#d9d9d9', font=('Arial', 18, 'bold'))
+                    id_pet.grid(row=i+2, column = 1, padx=20, pady=(0,10), sticky='se')
+
+                    self.panel.grid_rowconfigure(i+1, weight=1)
+                    print(item)
+            
+            case "Gerar Relatório": pass        
+            
+    def filter(self, mode):
+        print(mode)
+        self.dashboardManager.list_patients(mode=mode)
             
     def register_tutor(self):
         catch = customtkinter.CTkInputDialog(
@@ -367,10 +443,10 @@ class mainApp(customtkinter.CTk):
         toplevel.resizable(False, False)
         toplevel.columnconfigure(0, weight=1)
         
-        temp_label = customtkinter.CTkLabel(master=toplevel, text=msg, font=('Arial', 16))
+        temp_label = customtkinter.CTkLabel(master=toplevel, text=msg, font=('Open Sans Regular', 16))
         temp_label.grid(padx=20, pady=10, sticky='', row=0)
     
-        btn = customtkinter.CTkButton(master=toplevel, text="Fechar", font=("Arial", 16), command=toplevel.destroy)
+        btn = customtkinter.CTkButton(master=toplevel, text="Fechar", font=("Open Sans Regular", 16), command=toplevel.destroy)
         btn.grid(padx=20, pady=20, sticky='', row=1)
 
 
@@ -386,7 +462,7 @@ class mainApp(customtkinter.CTk):
             "title": "Visualizar Pacientes",
             "btn": "Visualizar Pacientes",
         })        
-
+        
         
     def generate_patient_report(self) -> None:
          self.changePanel(params={
