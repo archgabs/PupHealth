@@ -1,7 +1,8 @@
-import json
-import customtkinter
-from functools import partial as p 
 from DatabaseManager import LoginManager, DashboardUtilities
+from functools import partial as p 
+import customtkinter
+import json
+
 
 title_font = 'Pacifico'
 class LoginScreen(LoginManager):
@@ -172,6 +173,8 @@ class mainApp(customtkinter.CTk):
         self.columnconfigure(1, weight=1)
         
         self.is_panel_open = False
+        self.is_already_filter = False
+        self.temp_top_level = False
 
         self.nav = self.navBar(username=username, instance=instance)
         self.side = self.sideBar()
@@ -189,7 +192,7 @@ class mainApp(customtkinter.CTk):
                                                            height=40,
                                                            anchor='center',
                                                            text=f"Bem-vindo de volta, {self.dashboardManager.get_user(usr=username)[0]}.",
-                                                           font=('Arial', 16, 'bold'),)
+                                                           font=('Arial', 20, 'bold'),)
         
         self.top_frame_user_label.grid(column=0, row=0, padx=20, pady=20, sticky='nw')
         
@@ -233,7 +236,7 @@ class mainApp(customtkinter.CTk):
         print("SUCESS_BUILDING_SIDEBAR")
     
            
-    def createPanel(self, params: dict):
+    def createPanel(self, params: dict) -> None:
         self.panel = customtkinter.CTkScrollableFrame(master=self, label_text=params['title'], width=880)
         self.panel.grid(row=1, column=1, padx=20, pady=(10,20), sticky='nsew')
         self.panel.grid_columnconfigure(0, weight=1)
@@ -283,86 +286,140 @@ class mainApp(customtkinter.CTk):
                 print("SUCESS_ADDING_ITENS")
                     
             case "Visualizar Pacientes": 
-                self.filter_btns_names = ["ID", "Tutor", "Nome Paciente"]
-                self.filter_btns: dict = {}
-                self.panel.grid_rowconfigure(0, weight=1)
-
-                
-                for i, btn_name in enumerate(self.filter_btns_names):
-                    temp_btn = customtkinter.CTkButton(master=self.panel,
-                                                        text=f"{btn_name}",
-                                                        fg_color="#333",
-                                                        height=40)
-                    
-                    if i == 0:
-                        diff_sticky = 'nw'
-                    elif i== 2:
-                        diff_sticky = 'ne'
-                    else:
-                        diff_sticky = ''
-                        
-                    
-                    temp_btn.grid(column=i, row=0, pady=(10,5), padx=20, sticky=diff_sticky)
-                    self.panel.grid_columnconfigure(i, weight=1)
-                    self.filter_btns[btn_name] = temp_btn
-                    
-                
-                self.filter_btns["ID"].configure(
-                    command=p(self.filter, mode="ID")
-                )
-                self.filter_btns["Tutor"].configure(
-                    command=p(self.filter, mode="Tutor")
-                )
-                self.filter_btns["Nome Paciente"].configure(
-                    command=p(self.filter, mode="Nome Paciente")
-                )    
-                                  
-                # patients_frame_holder: dict = {}                    
-                catch = self.dashboardManager.list_patients()
-                for i, item in enumerate(catch):
-                    # Lado Esquerdo
-                    temp_frame = customtkinter.CTkFrame(master=self.panel, width=600, fg_color='#333', height=150)
-                    temp_frame.grid_columnconfigure(0, weight=1)
-                    temp_frame.grid_columnconfigure(1, weight=1)
-                    
-                    temp_frame.grid(row=i+1, column=0, padx=20, pady=(10,20), sticky='nwe', columnspan=3)
-                    temp_frame.propagate(False)
-                    
-                    name = customtkinter.CTkLabel(text=item[1].title(), master=temp_frame, text_color='#d9d9d9', font=('Arial', 28, 'bold'))
-                    name.grid(row=i, padx=20, pady=(10,0), sticky='nw')
-                    
-                    tutor = customtkinter.CTkLabel(text=item[2].title(), master=temp_frame, text_color='#a6a6a6', font=('Arial', 18, 'bold'))
-                    tutor.grid(row=i+1, padx=20, pady=(0,0), sticky='nw')
-
-                    vacinas_data = json.loads(item[3])
-                    vacinas_texto = "\t".join([f"{v['nome']}" for v in vacinas_data])
-
-                    vacinas = customtkinter.CTkLabel(text=vacinas_texto, master=temp_frame, text_color='#737373', font=('Arial', 14, 'italic'))
-                    vacinas.grid(row=i+2, padx=20, pady=(0, 10), sticky='nw')
-                    
-                    # Lado direito
-                    edit_button = customtkinter.CTkButton(master=temp_frame,
-                                                            text="Editar",
-                                                            font=("Arial", 14, 'bold'),
-                                                            width=100, height=40,
-                                                            corner_radius=30, fg_color='#282828',)
-                    
-                    edit_button.grid(row=i, column=1, padx=20, pady=(10,0), sticky='ne')
-                    
-
-                    id_pet = customtkinter.CTkLabel(text=f'ID: {item[0]}', master=temp_frame, text_color='#d9d9d9', font=('Arial', 18, 'bold'))
-                    id_pet.grid(row=i+2, column = 1, padx=20, pady=(0,10), sticky='se')
-
-                    self.panel.grid_rowconfigure(i+1, weight=1)
-                    print(item)
+                # retorna os itens e renderiza
+                self.generate_itens_by_mode()
             
             case "Gerar Relatório": pass        
             
-    def filter(self, mode):
-        print(mode)
-        self.dashboardManager.list_patients(mode=mode)
+    def generate_filter_buttons(self):
+        self.filter_btns: dict = {}
+        self.filter_btns_names = ["ID", "Tutor", "Nome Paciente"]
+        self.panel.grid_rowconfigure(0, weight=1)
+
+        
+        for i, btn_name in enumerate(self.filter_btns_names):
+            temp_btn = customtkinter.CTkButton(master=self.panel,
+                                                text=f"{btn_name}",
+                                                fg_color="#333",
+                                                height=40)
+            if i == 0:
+                diff_sticky = 'nw'
+            elif i== 2:
+                diff_sticky = 'ne'
+            else:
+                diff_sticky = ''
+                
+            temp_btn.grid(column=i, row=0, pady=(10,5), padx=20, sticky=diff_sticky)
+            self.panel.grid_columnconfigure(i, weight=1)
+            self.filter_btns[btn_name] = temp_btn
             
-    def register_tutor(self):
+        self.filter_btns["ID"].configure(
+            command=p(self.generate_itens_by_mode, mode="INIT")
+        )
+        self.filter_btns["Tutor"].configure(
+            command=p(self.generate_itens_by_mode, mode="Tutor")
+        )
+        self.filter_btns["Nome Paciente"].configure(
+            command=p(self.generate_itens_by_mode, mode="Nome Paciente")
+        )    
+
+    def generate_itens_by_mode(self, mode: str = "INIT") -> None:            
+        if self.is_already_filter:
+            for frame in self.panel_itens_frames:
+                if frame.winfo_exists():
+                    frame.grid_forget()
+        
+        match mode:
+            case "INIT":
+                catch = self.dashboardManager.list_patients(mode=mode)
+            case "Tutor":
+                usr_input = customtkinter.CTkInputDialog(title="Qual o tutor?", text="Digite abaixo o tutor para filtrar.\nEX: Lestat").get_input().lower()
+                # if usr_input.isalpha() and usr_input not in [None, "", " "]:
+                if self.dashboardManager.does_tutor_or_patient_exist(usr_input):
+                    catch = self.dashboardManager.list_patients(mode=mode, tutor=usr_input)
+                else:
+                    self.alert(title="Tutor não encontrado.", msg="Certifique-se que digitou corretamente.") 
+            case "Nome Paciente":
+                usr_input = customtkinter.CTkInputDialog(title="Qual o nome do animal?", text="Digite abaixo o animal para filtrar.\nEX: Lagostinha").get_input().lower()
+                # if usr_input.isalpha() and usr_input not in [None, "", " "].
+                if self.dashboardManager.does_tutor_or_patient_exist(usr_input):
+                    catch = self.dashboardManager.list_patients(mode=mode, tutor=usr_input)
+                else:
+                    self.alert(title="Usuário não encontrado.", msg="Certifique-se que digitou corretamente.")
+                               
+        self.generate_filter_buttons()              
+        if catch is not None: 
+            self.is_already_filter = True
+            self.panel_itens_frames = []
+            for i, item in enumerate(catch):
+                # Lado Esquerdo
+                temp_frame = customtkinter.CTkFrame(master=self.panel, width=600, fg_color='#333', height=150)
+                temp_frame.grid_columnconfigure(0, weight=1)
+                temp_frame.grid_columnconfigure(1, weight=1)
+                
+                temp_frame.grid(row=i+1, column=0, padx=20, pady=(10,20), sticky='nwe', columnspan=3)
+                temp_frame.propagate(False)
+                
+                name = customtkinter.CTkLabel(text=item[1].title(), master=temp_frame, text_color='#d9d9d9', font=('Arial', 28, 'bold'))
+                name.grid(row=i, padx=20, pady=(10,0), sticky='nw')
+                
+                tutor = customtkinter.CTkLabel(text=item[2].title(), master=temp_frame, text_color='#a6a6a6', font=('Arial', 18, 'bold'))
+                tutor.grid(row=i+1, padx=20, pady=(0,0), sticky='nw')
+
+                vacinas_data = json.loads(item[3])
+                vacinas_texto = "\t".join([f"{v['nome']}" for v in vacinas_data])
+
+                vacinas = customtkinter.CTkLabel(text=vacinas_texto, master=temp_frame, text_color='#737373', font=('Arial', 14, 'italic'))
+                vacinas.grid(row=i+2, padx=20, pady=(0, 10), sticky='nw')
+                
+                # Lado direito
+                id_pet = customtkinter.CTkLabel(text=f'ID: {item[0]}', master=temp_frame, text_color='#d9d9d9', font=('Arial', 18, 'bold'))
+                id_pet.grid(row=i+2, column = 1, padx=20, pady=(0,10), sticky='se')
+
+                edit_button = customtkinter.CTkButton(master=temp_frame,
+                                                        text="Editar",
+                                                        font=("Arial", 14, 'bold'),
+                                                        width=100, height=40,
+                                                        corner_radius=10, fg_color='#282828',
+                                                        command=p(self.edit_patient, item[0]))
+                
+                edit_button.grid(row=i, column=1, padx=20, pady=(10,0), sticky='ne')
+
+                self.panel.grid_rowconfigure(i+1, weight=1)
+                self.panel_itens_frames.append(temp_frame)
+                print(item)    
+        
+        
+    def edit_patient(self, pet_id: int) -> None:
+        if self.temp_top_level and self.temp_top_level.winfo_exists():
+            self.temp_top_level.destroy()
+
+        self.temp_top_level = customtkinter.CTkToplevel()
+    
+        self.temp_top_level.title("Edição de Paciente")
+        self.temp_top_level.resizable(False, False)
+        self.temp_top_level.grid_columnconfigure(0, weight=1)
+        
+        for i, item in enumerate(["Alterar Nome", "Modificar Vacinas", "Alterar Gênero"]):
+            self.temp_top_level.grid_rowconfigure(i, weight=1)
+            btn = customtkinter.CTkButton(text=item, master=self.temp_top_level, width=250, height=30)        
+            btn.grid(row=i, padx=20, pady=20, sticky='ew')
+            btn.configure(command=p(self.alter_btns, pet_id, item))
+            
+            
+    def alter_btns(self, pet_id, item) -> None:
+        match item:
+            case "Alterar Nome":
+                pass
+            case "Modificar Vacinas":
+                pass
+            case "Alterar Gênero":
+                pass
+
+        self.dashboardManager.alter_btns_functionality(id=pet_id, mode=item)
+    
+            
+    def register_tutor(self) -> None:
         catch = customtkinter.CTkInputDialog(
             title="Tutor Não Encontrado",
             text=f"Tutor {self.register_patients_elements['tutor'].get().title()} não registrado, deseja incluir um novo tutor? (Sim)",)
@@ -436,6 +493,7 @@ class mainApp(customtkinter.CTk):
                 self.panel.grid_forget()
                 self.createPanel(params)
 
+
     def alert(self, title, msg):
         toplevel = customtkinter.CTkToplevel()
         toplevel.geometry('300')
@@ -449,13 +507,13 @@ class mainApp(customtkinter.CTk):
         btn = customtkinter.CTkButton(master=toplevel, text="Fechar", font=("Open Sans Regular", 16), command=toplevel.destroy)
         btn.grid(padx=20, pady=20, sticky='', row=1)
 
-
-        
+   
     def display_register_patient(self) -> None:
         self.changePanel(params={
             "title": "Cadastro de Pacientes",
             "btn": "Cadastrar Paciente",
         })        
+        
         
     def visualize_patients(self) -> None:
         self.changePanel(params={
@@ -472,5 +530,6 @@ class mainApp(customtkinter.CTk):
    
     
     def exitApp(self, instance) -> None:
+        self.dashboardManager.close_db()
         self.destroy()
         instance.__init__()
