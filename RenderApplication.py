@@ -231,7 +231,7 @@ class mainApp(customtkinter.CTk):
             command=self.visualize_patients
         )
         self.buttons["Gerar Relatório"].configure(
-            command=self.generate_patient_report
+            command=lambda event = False: print("Gerar Relatório")
         )
         print("SUCESS_BUILDING_SIDEBAR")
     
@@ -289,7 +289,7 @@ class mainApp(customtkinter.CTk):
                 # retorna os itens e renderiza
                 self.generate_itens_by_mode()
             
-            case "Gerar Relatório": pass        
+            case "Gerar Relatório": pass       
             
     def generate_filter_buttons(self):
         self.filter_btns: dict = {}
@@ -322,6 +322,7 @@ class mainApp(customtkinter.CTk):
         self.filter_btns["Nome Paciente"].configure(
             command=p(self.generate_itens_by_mode, mode="Nome Paciente")
         )    
+
 
     def generate_itens_by_mode(self, mode: str = "INIT") -> None:            
         if self.is_already_filter:
@@ -583,11 +584,11 @@ class mainApp(customtkinter.CTk):
         })          
         
         
-    def generate_patient_report(self) -> None:
-         self.changePanel(params={
-            "title": "Gerar Relatório",
-            "btn": "Gerar Relatório",
-        })        
+    # def generate_patient_report(self) -> None:
+    #      self.changePanel(params={
+    #         "title": "Gerar Relatório",
+    #         "btn": "Gerar Relatório",
+    #     })        
    
     
     def exitApp(self, instance) -> None:
