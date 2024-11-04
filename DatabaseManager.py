@@ -244,15 +244,43 @@ class DashboardUtilities():
             return self.cursor.execute('SELECT * FROM tutor WHERE nome_tutor = ?', (nome,))
         else:
             return self.cursor.execute('SELECT * FROM patients WHERE nome = ?', (nome,))
+
     
-    def alter_btns_functionality(self, id: int, mode: str) -> None:
-        match mode: 
-            case "Alterar Nome":
-                print(mode, id)
-            case "Modificar Vacinas":
-                print(mode, id)
-            case "Alterar Gênero":
-                print(mode, id)
-    
-    
+    def update_patient_name(self, pet_id: int, new_name: str) -> bool:
+        """Atualiza o nome de um paciente no banco de dados."""
+        try:
+            self.cursor.execute("UPDATE patients SET nome = ? WHERE id = ?", (new_name, pet_id))
+            self.handler.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Erro ao atualizar o nome: {e}")
+            return False
+
+
+    def update_patient_vaccines(self, pet_id: int, vaccines_list: list) -> bool:
+        """Atualiza as vacinas de um paciente no banco de dados."""
+        try:
+            vacinas_json = json.dumps([
+                {"nome": vacina.strip(), "data": datetime.now().strftime("%d-%m-%Y")}
+                for vacina in vaccines_list
+            ])
+            self.cursor.execute("UPDATE patients SET vacinas_tomadas = ? WHERE id = ?", (vacinas_json, pet_id))
+            self.handler.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Erro ao atualizar vacinas: {e}")
+            return False
+
+
+    def update_patient_gender(self, pet_id: int, new_gender: str) -> bool:
+        """Atualiza o gênero de um paciente no banco de dados."""
+        try:
+            self.cursor.execute("UPDATE patients SET genero = ? WHERE id = ?", (new_gender.lower(), pet_id))
+            self.handler.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Erro ao atualizar o gênero: {e}")
+            return False
+
+
     def close_db(self): self.handler.close()

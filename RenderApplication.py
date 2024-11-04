@@ -410,15 +410,76 @@ class mainApp(customtkinter.CTk):
     def alter_btns(self, pet_id, item) -> None:
         match item:
             case "Alterar Nome":
-                pass
-            case "Modificar Vacinas":
-                pass
-            case "Alterar Gênero":
-                pass
+                new_name = customtkinter.CTkInputDialog(title="Alterar Nome", text="Digite o novo nome do paciente:").get_input()
+                if new_name:
+                    success = self.dashboardManager.update_patient_name(pet_id, new_name)
+                    if success:
+                        self.alert(title="Sucesso", msg="Nome atualizado com sucesso!")
+                    else:
+                        self.alert(title="Erro", msg="Falha ao atualizar o nome.")
+                else:
+                    self.alert(title="Entrada Inválida", msg="Nome não pode estar vazio.")
 
-        self.dashboardManager.alter_btns_functionality(id=pet_id, mode=item)
-    
-            
+            case "Modificar Vacinas":
+                current_vaccines = json.loads(self.dashboardManager.cursor.execute("SELECT vacinas_tomadas FROM patients WHERE id = ?", (pet_id,)).fetchone()[0])
+                current_vaccines_text = ', '.join([vacina["nome"] for vacina in current_vaccines])
+
+                updated_vaccines = customtkinter.CTkInputDialog(
+                    title="Modificar Vacinas",
+                    text=f"Vacinas atuais: {current_vaccines_text}\n\nDigite novas vacinas (separadas por vírgula):"
+                ).get_input()
+                if updated_vaccines:
+                    vaccine_list = [vac.strip() for vac in updated_vaccines.split(',') if vac.strip()]
+                    if vaccine_list:
+                        success = self.dashboardManager.update_patient_vaccines(pet_id, vaccine_list)
+                        if success:
+                            self.alert(title="Sucesso", msg="Vacinas atualizadas com sucesso!")
+                        else:
+                            self.alert(title="Erro", msg="Falha ao atualizar as vacinas.")
+                    else:
+                        self.alert(title="Entrada Inválida", msg="Vacinas não podem estar vazias.")
+                else:
+                    self.alert(title="Entrada Inválida", msg="Vacinas não podem estar vazias.")
+
+            case "Alterar Gênero":
+                # Janela para seleção do novo gênero usando grid
+                gender_window = customtkinter.CTkToplevel(self.temp_top_level)
+                gender_window.title("Alterar Gênero")
+                gender_window.geometry("300x200")
+                gender_window.resizable(False,False)
+                gender_window.grid_columnconfigure(0, weight=1)
+
+                label = customtkinter.CTkLabel(gender_window, text="Selecione o novo gênero:")
+                label.grid(row=0, column=0, padx=20, pady=10)
+
+                new_gender_menu = customtkinter.CTkOptionMenu(
+                    master=gender_window, values=["Macho", "Fêmea"]
+                )
+                new_gender_menu.grid(row=1, column=0, padx=20, pady=10)
+
+                error_label = customtkinter.CTkLabel(gender_window, text="", text_color="red")
+                error_label.grid(row=2, column=0)
+
+                # Função para salvar a seleção
+                def save_gender():
+                    new_gender = new_gender_menu.get()
+                    if new_gender in ["Macho", "Fêmea"]:
+                        success = self.dashboardManager.update_patient_gender(pet_id, new_gender)
+                        if success:
+                            self.alert(title="Sucesso", msg="Gênero atualizado com sucesso!")
+                        else:
+                            self.alert(title="Erro", msg="Falha ao atualizar o gênero.")
+                        gender_window.destroy()
+                    else:
+                        error_label.configure(text="Por favor, selecione um gênero válido.")
+
+                save_button = customtkinter.CTkButton(gender_window, text="Salvar", command=save_gender)
+                save_button.grid(row=3, column=0, padx=20, pady=10)
+
+        # Atualizar visualização após qualquer edição
+        self.generate_itens_by_mode(mode="INIT")
+
+                
     def register_tutor(self) -> None:
         catch = customtkinter.CTkInputDialog(
             title="Tutor Não Encontrado",
@@ -519,7 +580,7 @@ class mainApp(customtkinter.CTk):
         self.changePanel(params={
             "title": "Visualizar Pacientes",
             "btn": "Visualizar Pacientes",
-        })        
+        })          
         
         
     def generate_patient_report(self) -> None:
