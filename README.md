@@ -9,10 +9,10 @@ Quando pensamos em sistemas **hospitalares, veterinários ou de saúde** de modo
 Utilizando de bibliotecas modernas e práticas escaláveis, PupHealth utiliza as seguintes dependências:
 
 - [CustomTkinter](https://customtkinter.tomschimansky.com/) 
-> Biblioteca para construção de UI moderna, comumente atualizada e segura.
+> Biblioteca para construção de UI moderna, atualizada com frequência e segura.
 <code>pip install customtkinter</code>
 - [SQLite](https://www.sqlite.org/) 
-> Nossa escolha pessoal para Banco de Dados, simples, efetivo e desemepenha muito bem. 
+> Nossa escolha pessoal para Banco de Dados, simples, efetivo e desempenha muito bem. 
 
 ## Executando (Interpretando) através do código.
 
@@ -30,7 +30,7 @@ Utilizando de bibliotecas modernas e práticas escaláveis, PupHealth utiliza as
 ## Seus direitos perante ao código (Licença de Uso Pessoal).
 
 - É permitido a qualquer usuário da plataforma baixar e instalar o programa bem como seu uso para atividades pessoais.
-- É **TERMINANTEMENTE PROIBIDO** a apropriação do código para fins comerciais (cujo não esteja incluindo os mantenedores originais desse mesmo projeto)
+- É **TERMINANTEMENTE PROIBIDO** a apropriação do código para fins comerciais (cujo não esteja incluindo os mantendores originais desse mesmo projeto)
 - O código é livre _(Open-Source)_ para fins pessoais, porém, quaisquer FORK / Remasterização ficará apenas disponibilizada para o mesmo tipo de uso (Pessoal, sem fim comercial).
 
 ## Direitos comerciais reservados.
