@@ -13,6 +13,8 @@ Utilizando de bibliotecas modernas e práticas escaláveis, PupHealth utiliza as
 <code>pip install customtkinter</code>
 - [SQLite](https://www.sqlite.org/) 
 > Nossa escolha pessoal para Banco de Dados, simples, efetivo e desemepenha muito bem. 
+- [FPDF](https://pypi.org/project/fpdf/)
+> Gerador de PDFs. 
 
 ## Executando (Interpretando) através do código.
 
@@ -20,6 +22,7 @@ Utilizando de bibliotecas modernas e práticas escaláveis, PupHealth utiliza as
 2. Através do PIP (Python Package Index) installe as seguintes bibliotecas/apps.
     1. [CustomTkinter](https://customtkinter.tomschimansky.com/)
     2. [SQLite](https://www.sqlite.org/)
+    3. [FPDF](https://pypi.org/project/fpdf/)
     3. [Pacifico](https://fonts.google.com/specimen/Pacifico)
 3. Abra o VSCode/Outra IDE e execute a partir do <code>main.py</code>.
 
