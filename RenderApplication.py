@@ -1,4 +1,5 @@
 from DatabaseManager import LoginManager, DashboardUtilities
+from ReportGenerator import *
 from functools import partial as p 
 import customtkinter
 import json
@@ -17,10 +18,7 @@ class LoginScreen(LoginManager):
         self.app.title("Login")
         self.app.resizable(False, False)
         self.app.columnconfigure(0, weight=1)
-
-        # Temporary Bypass
-        # self.mainApp = mainApp(username='Bypass Login', instance=self)
-        
+       
         # Title
         self.label = customtkinter.CTkLabel(master=self.app, text="Pup Health", font=(title_font, 50),  padx = 20, pady = 20)
         self.label.grid(row = 0, column = 0, sticky="")
@@ -57,7 +55,8 @@ class LoginScreen(LoginManager):
         """Usado exclusivamente para mudar a label de Esqueceu"""
         self.forgot_password.configure(text_color = '#555') if mode == '<Enter>' else self.forgot_password.configure(text_color = 'white')
 
-    
+
+    # Login Validation
     def send_validation(self) -> None:
         lg = self.login_input.get() 
         ps = self.password_input.get()
@@ -77,14 +76,9 @@ class LoginScreen(LoginManager):
             case "FAILED":
                 self.forgot_password.configure(text="Servidor Offline!")         
                                    
-       
+
+    # Campo de verificação dos códigos enviados para o e-mail.
     def renderCodeVerify(self, has_been_sent: bool = False) -> None: 
-        """
-        has_been_sent atua como uma flag para o direcionamento das mudanças na UI;
-        Se não estiver como True (parametro padrão -> False) será criado a janela de recuperação de senha/code verify;
-        Caso contrário, será enviado a requisição para o e-mail;
-        Funções adjacentes: request_password_change, send_code_validation.
-        """
         # Retira a possibilidade de Spam
         self.forgot_password.unbind('<Button-1>')    
         
@@ -106,10 +100,11 @@ class LoginScreen(LoginManager):
                 self.btn.configure(text='Enviar Código')               
         else:
             # Se código não foi enviado, desenha tela de recuperação.
-            self.render_topLevel()
+            self.render_forgot_pass_toplevel()
 
 
-    def render_topLevel(self):
+
+    def render_forgot_pass_toplevel(self):
             self.temp_toplevel = customtkinter.CTkToplevel()
             self.temp_toplevel.geometry('450')
             self.temp_toplevel.title('Esqueceu a senha?')
@@ -147,6 +142,7 @@ class LoginScreen(LoginManager):
             
              
     def request_password_change(self, input, user) -> None:
+        # Passo final da requesição.
         catch = self.change_password(input, user)
         if catch:
             self.temp_toplevel.destroy()
@@ -231,7 +227,7 @@ class mainApp(customtkinter.CTk):
             command=self.visualize_patients
         )
         self.buttons["Gerar Relatório"].configure(
-            command=lambda event = False: print("Gerar Relatório")
+            command=self.generate_patient_report
         )
         print("SUCESS_BUILDING_SIDEBAR")
     
@@ -289,7 +285,6 @@ class mainApp(customtkinter.CTk):
                 # retorna os itens e renderiza
                 self.generate_itens_by_mode()
             
-            case "Gerar Relatório": pass       
             
     def generate_filter_buttons(self):
         self.filter_btns: dict = {}
@@ -443,7 +438,7 @@ class mainApp(customtkinter.CTk):
                     self.alert(title="Entrada Inválida", msg="Vacinas não podem estar vazias.")
 
             case "Alterar Gênero":
-                # Janela para seleção do novo gênero usando grid
+                # Janela para seleção do novo gênero
                 gender_window = customtkinter.CTkToplevel(self.temp_top_level)
                 gender_window.title("Alterar Gênero")
                 gender_window.geometry("300x200")
@@ -461,7 +456,7 @@ class mainApp(customtkinter.CTk):
                 error_label = customtkinter.CTkLabel(gender_window, text="", text_color="red")
                 error_label.grid(row=2, column=0)
 
-                # Função para salvar a seleção
+
                 def save_gender():
                     new_gender = new_gender_menu.get()
                     if new_gender in ["Macho", "Fêmea"]:
@@ -584,11 +579,19 @@ class mainApp(customtkinter.CTk):
         })          
         
         
-    # def generate_patient_report(self) -> None:
-    #      self.changePanel(params={
-    #         "title": "Gerar Relatório",
-    #         "btn": "Gerar Relatório",
-    #     })        
+    def generate_patient_report(self) -> None:
+        will_continue = True
+        while will_continue:
+            dialog = customtkinter.CTkInputDialog(text="Digite o nome do tutor para gerar o relatório.",
+                                                 title="Criação de relatório")
+
+            input = dialog.get_input()
+            if input not in ['', ' ', None]:
+                catch = self.dashboardManager.get_report(name=input)
+                if catch != None:
+                    will_continue = False
+
+        
    
     
     def exitApp(self, instance) -> None:

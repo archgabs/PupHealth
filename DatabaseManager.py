@@ -1,4 +1,5 @@
 from datetime import datetime
+from ReportGenerator import ReportCreator
 import sqlite3
 import smtplib
 import random
@@ -143,9 +144,7 @@ class DashboardUtilities():
     def __init__(self):
         self.handler = sqlite3.connect('database/database.db')
         self.cursor = self.handler.cursor()
-        # self.vaccine_pattern = r"^([a-zA-Zá-úÁ-Ú0-9]+)(,\s*[a-zA-Zá-úÁ-Ú0-9]+)*$"
         self.vaccine_pattern = r"^([a-zA-Zá-úÁ-Ú0-9]+(?:\s+[a-zA-Zá-úÁ-Ú0-9]+)*)(,\s*([a-zA-Zá-úÁ-Ú0-9]+(?:\s+[a-zA-Zá-úÁ-Ú0-9]+)*))*$"
-
 
 
     def get_user(self, usr):
@@ -283,4 +282,12 @@ class DashboardUtilities():
             return False
 
 
+    def get_report(self, name: str) -> None:
+        instance = ReportCreator()
+        # catch = ReportCreator.generatePDF(tutor_name=name)
+        catch = instance.generatePDF(name)
+            
+        return catch
+
+        
     def close_db(self): self.handler.close()
