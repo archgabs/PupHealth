@@ -580,18 +580,16 @@ class mainApp(customtkinter.CTk):
         
         
     def generate_patient_report(self) -> None:
-        will_continue = True
-        while will_continue:
-            dialog = customtkinter.CTkInputDialog(text="Digite o nome do tutor para gerar o relatório.",
-                                                 title="Criação de relatório")
+        dialog = customtkinter.CTkInputDialog(text="Digite o nome do tutor para gerar o relatório.",
+                                             title="Criação de relatório")
 
-            input = dialog.get_input()
-            if input not in ['', ' ', None]:
-                catch = self.dashboardManager.get_report(name=input)
-                if catch != None:
-                    will_continue = False
-
-        
+        input = dialog.get_input()
+        if input not in ['', ' ', None]:
+            catch = self.dashboardManager.get_report(name=input)
+            if catch != None:
+                self.alert("Relatório Salvo!", "Verifique a pasta do projeto.")
+        else:
+            self.alert("Input Inválido!", "Verifique o nome...")
    
     
     def exitApp(self, instance) -> None:
