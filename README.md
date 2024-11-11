@@ -12,7 +12,7 @@ Utilizando de bibliotecas modernas e práticas escaláveis, PupHealth utiliza as
 > Biblioteca para construção de UI moderna, comumente atualizada e segura.
 <code>pip install customtkinter</code>
 - [SQLite](https://www.sqlite.org/) 
-> Nossa escolha pessoal para Banco de Dados, simples, efetivo e desemepenha muito bem. 
+> Nossa escolha pessoal para Banco de Dados, simples, efetivo e desempenha muito bem. 
 - [FPDF](https://pypi.org/project/fpdf/)
 > Gerador de PDFs. 
 
